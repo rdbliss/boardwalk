@@ -303,5 +303,10 @@ def walk_accumulate(walks, length, chain, start=None):
 
     return res
 
-monopoly_chain = make_pykov_monopoly(40, 2, 30, 10)
-monopoly_matrix = make_numpy_monopoly(40, 2, 30, 10)
+if __name__ == "__main__":
+    monopoly_chain = make_pykov_monopoly(40, 2, 30, 10)
+    monopoly_matrix = make_numpy_monopoly(40, 2, 30, 10)
+
+    regular_power = 6
+    print("P^{} > 0?".format(regular_power))
+    print((np.linalg.matrix_power(monopoly_matrix, regular_power) > 0).all())
