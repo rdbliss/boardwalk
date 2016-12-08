@@ -48,7 +48,8 @@ def draw_chain(chain, layout="circular"):
 
     nx.draw_networkx(graph, pos)
 
-def make_numpy_monopoly(size, ndice, jail, goto_jail):
+def make_numpy_monopoly(size=40, ndice=2, jail=30, goto_jail=10,
+                                        chance_spaces=[7, 22, 36]):
     """
     Create a transition matrix for a finite Markov chain representing a
     simplified version of Monopoly. See make_pykov_monopoly() for an
@@ -81,24 +82,64 @@ def make_numpy_monopoly(size, ndice, jail, goto_jail):
     # Setup the jail rules.
     links[jail_first, jail] = escape_prob
     links[jail_second, jail] = escape_prob
-    links[jail_third, jail] = 1
+
+    # Treat the third turn in jail as rolling from jail.
+    for advance in range(min_advance, max_advance + 1):
+        effect_space = (jail + advance) % size
+        links[jail_third, effect_space] = dicepdf(advance, ndice, 6)
 
     links[jail_first, jail_second] = 1 - escape_prob
     links[jail_second, jail_third] = 1 - escape_prob
 
+    # Establish the rules for the rest of the board.
     for space in range(size):
         if space == goto_jail:
             # Immediately go to jail.
+            # (Normally, you wouldn't end up here. This only happens on chance
+            # spaces for technical reasons.)
             links[space, jail_first] = 1
         else:
-            # Advance according to the probability of advancing.
             for advance in range(min_advance, max_advance + 1):
                 effect_space = (space + advance) % size
-                links[space, effect_space] = dicepdf(advance, ndice, 6)
+
+                if effect_space == goto_jail:
+                    # Landing on goto_jail is treated as being sent straight to
+                    # jail_first.
+                    links[space, jail_first] = dicepdf(advance, ndice, 6)
+                elif effect_space in chance_spaces:
+                    # We land here with probability dicepdf(advance, ndice, 6).
+                    base_prob = dicepdf(advance, ndice, 6)
+
+                    # From here, there is a 20/32 chance to stay put.
+                    links[space, effect_space] = 20/32 * base_prob
+
+                    # There is a 12/32 chance to move from here to a random
+                    # spot, not including goto_jail, but including jail_first.
+                    # Each spot will have a 1/size * 12/32 chance of being
+                    # chosen.
+                    # Note that there are `size` elements being considered
+                    # here.
+                    for chosen_space in range(size):
+                        if (space, chosen_space) in links:
+                            links[space, chosen_space] += (1/size * 12/32 *
+                                                            base_prob)
+                        else:
+                            links[space, chosen_space] = (1/size * 12/32 *
+                                                            base_prob)
+
+                    # Summing up these probabilities, we get:
+                    #   20/32 * base_prob + size * 1/size * 12/32 * base_prob
+                    # = base_prob * (20/32 + 12 / 32)
+                    # = base_prob.
+                    # That is, all of the probabilities work out fine.
+                else:
+                    # Proceed as usual according to the probability of the sum.
+                    links[space, effect_space] = dicepdf(advance, ndice, 6)
 
     return links
 
-def make_pykov_monopoly(size, ndice, jail, goto_jail):
+def make_pykov_monopoly(size=40, ndice=2, jail=30, goto_jail=10,
+                                        chance_spaces=[7, 22, 36]):
     """Create a Markov chain representing a simplified version of Monopoly.
 
     Rules:
@@ -119,21 +160,35 @@ def make_pykov_monopoly(size, ndice, jail, goto_jail):
             - The special jail states are `jail_first = size`, `jail_second =
               size + 1`, and `jail_third = size + 2`.
 
-            - After landing on `goto_jail`, we move to `jail_first`.
+            - Landing on `goto_jail` is treated as being sent straight to
+              `jail_first`.
 
             - To leave jail, we have two possibilities:
 
-                - Wait three turns. From the third turn spot, we move to `jail`
-                  with probability one.
+                - Wait three turns. From the third turn spot, rolling is as if
+                  from `jail`.
 
                 - Roll the same thing on every dice. There is a 1/6**(ndice -
-                  1) probability of this occuring. If this does not happen, we
-                  advance to the next turn jail spot.
+                  1) probability of this occurring. If this occurs, then we are
+                  placed at `jail`. If this does not occur, then we advance to
+                  the next turn jail spot.
+
+        - Landing on a space in `chance_spots` triggers special chance rules:
+
+            - With probability 20/32, nothing will happen, and we will stay
+              put.
+
+            - With probability 12/32, a space will be chosen (uniformly) at
+              random, and we will be moved there. This includes `goto_jail`.
+              The reason for allowing `goto_jail` to be chosen is so that the
+              resulting transition matrix is still regular, as otherwise the
+              chain is not irreducible.
 
     :ndice: Number of dice we may roll.
     :size: Number of spaces on the board.
     :jail: Space on which the jail is located.
     :goto_jail: Space on which the "goto jail" is located.
+    :chance_spaces: Spaces on which the chance card rules are applied.
     :returns: Pykov Chain object.
 
     """
@@ -156,7 +211,11 @@ def make_pykov_monopoly(size, ndice, jail, goto_jail):
     # Setup the jail rules.
     links[(jail_first, jail)] = escape_prob
     links[(jail_second, jail)] = escape_prob
-    links[(jail_third, jail)] = 1
+
+    # Treat the third turn in jail as rolling from jail.
+    for advance in range(min_advance, max_advance + 1):
+        effect_space = (jail + advance) % size
+        links[(jail_third, effect_space)] = dicepdf(advance, ndice, 6)
 
     links[(jail_first, jail_second)] = 1 - escape_prob
     links[(jail_second, jail_third)] = 1 - escape_prob
@@ -165,12 +224,46 @@ def make_pykov_monopoly(size, ndice, jail, goto_jail):
     for space in range(size):
         if space == goto_jail:
             # Immediately go to jail.
+            # (Normally, you wouldn't end up here. This only happens on chance
+            # spaces for technical reasons.)
             links[(space, jail_first)] = 1
         else:
-            # Advance according to the probability of advancing.
             for advance in range(min_advance, max_advance + 1):
                 effect_space = (space + advance) % size
-                links[(space, effect_space)] = dicepdf(advance, ndice, 6)
+
+                if effect_space == goto_jail:
+                    # Landing on goto_jail is treated as being sent straight to
+                    # jail_first.
+                    links[(space, jail_first)] = dicepdf(advance, ndice, 6)
+                elif effect_space in chance_spaces:
+                    # We land here with probability dicepdf(advance, ndice, 6).
+                    base_prob = dicepdf(advance, ndice, 6)
+
+                    # From here, there is a 20/32 chance to stay put.
+                    links[(space, effect_space)] = 20/32 * base_prob
+
+                    # There is a 12/32 chance to move from here to a random
+                    # spot, not including goto_jail, but including jail_first.
+                    # Each spot will have a 1/size * 12/32 chance of being
+                    # chosen.
+                    # Note that there are `size` elements being considered
+                    # here.
+                    for chosen_space in range(size):
+                        if (space, chosen_space) in links:
+                            links[space, chosen_space] += (1/size * 12/32 *
+                                                            base_prob)
+                        else:
+                            links[space, chosen_space] = (1/size * 12/32 *
+                                                            base_prob)
+
+                    # Summing up these probabilities, we get:
+                    #   20/32 * base_prob + size * 1/size * 12/32 * base_prob
+                    # = base_prob * (20/32 + 12 / 32)
+                    # = base_prob.
+                    # That is, all of the probabilities work out fine.
+                else:
+                    # Proceed as usual according to the probability of the sum.
+                    links[(space, effect_space)] = dicepdf(advance, ndice, 6)
 
     return pykov.Chain(links)
 
