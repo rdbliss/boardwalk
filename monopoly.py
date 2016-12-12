@@ -308,5 +308,11 @@ if __name__ == "__main__":
     monopoly_matrix = make_numpy_monopoly(40, 2, 30, 10)
 
     regular_power = 6
+    power = np.linalg.matrix_power(monopoly_matrix, regular_power)
     print("P^{} > 0?".format(regular_power))
-    print((np.linalg.matrix_power(monopoly_matrix, regular_power) > 0).all())
+    if (power > 0).all():
+        print(True)
+        print(monopoly_chain.steady())
+    else:
+        print(False)
+        print("No steady state to compute.")
