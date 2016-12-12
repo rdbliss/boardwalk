@@ -63,7 +63,7 @@ eigenvals, eigenvectors = np.linalg.eig(Pnp)
 # Since 1 is the dominant eigenvalue, 1 is also the largest eigenvalue.
 dominant = np.argmax(eigenvals)
 steady = eigenvectors[:,dominant]
-steady = steady / sum(steady) # Normalize to a probability distribution.
+steady /= sum(steady) # Normalize to a probability distribution.
 
 print("numpy:", steady)
 
