@@ -155,7 +155,7 @@ def make_pykov_monopoly(size=40, ndice=2, jail=30, goto_jail=10,
 
         - `jail` and `goto_jail` cannot be equal. (Allowing them to be equal
           _and_ obeying the jail rules contradicts the stochastic matrix
-          property. We would have P[jail, jail_first] = 1 _and P[jail, jail +
+          property. We would have P[jail, jail_first] = 1 _and_ P[jail, jail +
           ndice] > 0.)
 
         - If we land on `goto_jail`, then we move to the special jail states:

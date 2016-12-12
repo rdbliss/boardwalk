@@ -26,10 +26,14 @@ Bugs so far:
         c = pykov.Chain({(1, 1): 1})
         c.communication_classes()
 
+        (Noted at Pykov. Suggested a few fixes, but no current discussion.)
+
     - Calling `Chain.walk()` without a start state throws an UnboundLocalError.
       Sometimes. Not always. I'm not sure why.
+        (I've submitted a pull request that fixes this issue.)
 
     - Passing `0` as a start node causes a random node to be selected.
+        (Fixed!)
 
 Complaints:
     There's not a great way to pretty print pykov Chains.
