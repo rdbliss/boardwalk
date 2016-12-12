@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import pykov
 import math
 import networkx as nx
