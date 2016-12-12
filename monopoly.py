@@ -303,6 +303,64 @@ def walk_accumulate(walks, length, chain, start=None):
 
     return res
 
+def space_align(strings):
+    """Return strings space-aligned for printing.
+
+    Consider printing this:
+        foobar: 0
+        bar: 1
+
+    We would rather:
+        foobar: 0
+           bar: 1
+
+    This is what is meant by space-aligning. We add a space to every string so
+    that when printing or appending new strings at the end, they start from the
+    same position.
+
+    :strings: List of strings.
+    :returns: List of space-aligned strings.
+
+    """
+    longest = max(len(s) for s in strings)
+    return [" "*(longest - len(s)) + s for s in strings]
+
+def report_steady(chain):
+    """
+    Print a report on the steady state of the Monopoly chain, assuming that one
+    exists.
+
+    :chain: pykov.Chain created by make_pykov_monopoly().
+    :returns: Nothing.
+
+    """
+    steady = chain.steady()
+    jail_spaces = [30, 40, 41, 42]
+    jail_prob = sum(steady[j] for j in jail_spaces)
+    probs = {"jail": jail_prob}
+    for space in steady.keys():
+        if space not in jail_spaces:
+            probs[space] = steady[space]
+
+    print("Steady state probabilities:")
+
+    # Align space names so that they print prettily.
+    # Sort probabilities into descending order.
+    sorted_pairs = sorted(probs.items(), key=lambda pair: pair[-1],
+                            reverse=True)
+
+    # Grab the string of the space name.
+    sorted_strings = [str(pair[0]) for pair in sorted_pairs]
+    # Align them so that they print pretty.
+    sorted_strings = space_align(sorted_strings)
+
+    # sorted_strings does not keep track of the probability, but it is in the
+    # same order as sorted_pairs, so we can use the current index to grab the
+    # probability.
+    for index, aligned_space in enumerate(sorted_strings):
+        prob = sorted_pairs[index][-1]
+        print("    {}:".format(aligned_space), prob)
+
 if __name__ == "__main__":
     monopoly_chain = make_pykov_monopoly(40, 2, 30, 10)
     monopoly_matrix = make_numpy_monopoly(40, 2, 30, 10)
@@ -312,7 +370,7 @@ if __name__ == "__main__":
     print("P^{} > 0?".format(regular_power))
     if (power > 0).all():
         print(True)
-        print(monopoly_chain.steady())
+        report_steady(monopoly_chain)
     else:
         print(False)
         print("No steady state to compute.")
