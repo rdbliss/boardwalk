@@ -51,7 +51,7 @@ def draw_chain(chain, layout="circular"):
 
     nx.draw_networkx(graph, pos)
 
-def make_numpy_monopoly(size=40, ndice=2, jail=30, goto_jail=10,
+def make_numpy_monopoly(size=40, ndice=2, jail=10, goto_jail=30,
                                         chance_spaces=[7, 22, 36]):
     """
     Create a transition matrix for a finite Markov chain representing a
@@ -141,7 +141,7 @@ def make_numpy_monopoly(size=40, ndice=2, jail=30, goto_jail=10,
 
     return links
 
-def make_pykov_monopoly(size=40, ndice=2, jail=30, goto_jail=10,
+def make_pykov_monopoly(size=40, ndice=2, jail=10, goto_jail=30,
                                         chance_spaces=[7, 22, 36]):
     """Create a Markov chain representing a simplified version of Monopoly.
 
@@ -338,7 +338,7 @@ def report_steady(chain):
 
     """
     steady = chain.steady()
-    jail_spaces = [30, 40, 41, 42]
+    jail_spaces = [10, 40, 41, 42]
     jail_prob = sum(steady[j] for j in jail_spaces)
     probs = {"jail": jail_prob}
     for space in steady.keys():
@@ -365,8 +365,8 @@ def report_steady(chain):
         print("    {}:".format(aligned_space), prob)
 
 if __name__ == "__main__":
-    monopoly_chain = make_pykov_monopoly(40, 2, 30, 10)
-    monopoly_matrix = make_numpy_monopoly(40, 2, 30, 10)
+    monopoly_chain = make_pykov_monopoly(40, 2, 10, 30)
+    monopoly_matrix = make_numpy_monopoly(40, 2, 10, 30)
 
     regular_power = 6
     power = np.linalg.matrix_power(monopoly_matrix, regular_power)
