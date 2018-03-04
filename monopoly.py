@@ -65,6 +65,11 @@ def make_numpy_monopoly(size=40, ndice=2, jail=10, goto_jail=30,
     This is a _right_ stochastic matrix, i.e. P[i, j] is the probability of
     moving to state j from state i.
     """
+
+    # Note: Until the very end of this function, P[i, j] means the probability
+    # of transitioning from state i to state j. We fix that right at the end by
+    # transposing our matrix.
+
     if jail == goto_jail:
         raise ValueError("`jail` and `goto_jail` must be distinct")
 
@@ -137,7 +142,7 @@ def make_numpy_monopoly(size=40, ndice=2, jail=10, goto_jail=30,
                     # Proceed as usual according to the probability of the sum.
                     links[space, effect_space] = dicepdf(advance, ndice, 6)
 
-    return links
+    return links.T
 
 def make_pykov_monopoly(size=40, ndice=2, jail=10, goto_jail=30,
                                         chance_spaces=[7, 22, 36]):
