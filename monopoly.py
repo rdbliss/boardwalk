@@ -183,7 +183,7 @@ def make_pykov_monopoly(size=40, ndice=2, jail=10, goto_jail=30,
                 - Wait three turns. From the third turn spot, rolling is as if
                   from `jail`.
 
-                - Roll the same thing on every dice. There is a 1/6**(ndice -
+                - Roll the same thing on every die. There is a 1/6**(ndice -
                   1) probability of this occurring. If this occurs, then we are
                   placed at `jail`. If this does not occur, then we advance to
                   the next turn jail spot.
