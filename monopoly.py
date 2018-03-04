@@ -348,23 +348,20 @@ def report_steady(chain):
     steady = chain.steady()
     jail_spaces = [10, 40, 41, 42]
     jail_prob = sum(steady[j] for j in jail_spaces)
-    probs = {"jail": jail_prob}
+    probs = {"Jail (10)": jail_prob}
     for space in steady.keys():
         if space not in jail_spaces:
-            probs[space] = steady[space]
+            name = standard_monopoly_map[space]
+            key = name + " ({})".format(space)
+            probs[key] = steady[space]
 
     print("Steady state probabilities:")
 
-    # Align space names so that they print prettily.
     # Sort probabilities into descending order.
     sorted_pairs = sorted(probs.items(), key=lambda pair: pair[-1],
-                            reverse=True)
+                          reverse=True)
 
-    # Grab the string of the space name.
-    # We treated "jail" special, so just pass it through.
-    sorted_strings = [standard_monopoly_map[pair[0]] + " ({})".format(pair[0])
-                        if pair[0] != "jail" else "Jail (10)"
-                            for pair in sorted_pairs]
+    sorted_strings = [name for name, prob in sorted_pairs]
     # Align them so that they print pretty.
     sorted_strings = space_align(sorted_strings)
 
@@ -373,7 +370,8 @@ def report_steady(chain):
     # probability.
     for index, aligned_space in enumerate(sorted_strings):
         prob = sorted_pairs[index][-1]
-        print("    {}:".format(aligned_space), prob)
+        print("\t{}:".format(aligned_space), prob)
+
 
 standard_monopoly_map = { 0: "GO"
                         , 1: "Mediterranean Avenue"
