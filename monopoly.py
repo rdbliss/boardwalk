@@ -237,12 +237,7 @@ def make_pykov_monopoly(size=40, ndice=2, jail=10, goto_jail=30,
 
     # Establish the rules for the rest of the board.
     for space in range(size):
-        if space == goto_jail:
-            # Immediately go to jail.
-            # (Normally, you wouldn't end up here. This only happens on chance
-            # spaces for technical reasons.)
-            links[(space, jail_first)] = 1
-        else:
+        if space != goto_jail:
             for advance in range(min_advance, max_advance + 1):
                 effect_space = (space + advance) % size
 
@@ -258,12 +253,15 @@ def make_pykov_monopoly(size=40, ndice=2, jail=10, goto_jail=30,
                     links[(space, effect_space)] = 20 / 32 * base_prob
 
                     # There is a 12/32 chance to move from here to a random
-                    # spot, not including goto_jail, but including jail_first.
+                    # spot, including `jail_first`.
                     # Each spot will have a 1/size * 12/32 chance of being
                     # chosen.
                     # Note that there are `size` elements being considered
                     # here.
                     for chosen_space in range(size):
+                        if chosen_space == goto_jail:
+                            # Go directly to jail, not `goto_jail`.
+                            chosen_space = jail_first
                         if (space, chosen_space) in links:
                             links[space, chosen_space] += (1 / size * 12 / 32 * base_prob)
                         else:
