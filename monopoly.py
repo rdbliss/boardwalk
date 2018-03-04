@@ -122,12 +122,14 @@ def make_numpy_monopoly(size=40, ndice=2, jail=10, goto_jail=30,
                     links[space, effect_space] = 20 / 32 * base_prob
 
                     # There is a 12/32 chance to move from here to a random
-                    # spot, not including goto_jail, but including jail_first.
+                    # spot, including `jail_first`, and excluding `goto_jail`.
                     # Each spot will have a 1/size * 12/32 chance of being
                     # chosen.
                     # Note that there are `size` elements being considered
                     # here.
                     for chosen_space in range(size):
+                        if chosen_space == goto_jail:
+                            chosen_space = jail_first
                         if (space, chosen_space) in links:
                             links[space, chosen_space] += (1 / size * 12 / 32 * base_prob)
                         else:
@@ -141,6 +143,13 @@ def make_numpy_monopoly(size=40, ndice=2, jail=10, goto_jail=30,
                 else:
                     # Proceed as usual according to the probability of the sum.
                     links[space, effect_space] = dicepdf(advance, ndice, 6)
+
+    # Alright, so we need to fix one thing. The matrix currently has a column
+    # and row dedicated to `goto_jail`. Nothing goes there, and we don't want
+    # to have it. (It ruins regularity.) Thus, we'll strip its row and its
+    # column from the matrix.
+    links = np.delete(links, goto_jail, axis=0)
+    links = np.delete(links, goto_jail, axis=1)
 
     return links.T
 
