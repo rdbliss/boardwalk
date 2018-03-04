@@ -114,7 +114,7 @@ def make_numpy_monopoly(size=40, ndice=2, jail=10, goto_jail=30,
                     base_prob = dicepdf(advance, ndice, 6)
 
                     # From here, there is a 20/32 chance to stay put.
-                    links[space, effect_space] = 20/32 * base_prob
+                    links[space, effect_space] = 20 / 32 * base_prob
 
                     # There is a 12/32 chance to move from here to a random
                     # spot, not including goto_jail, but including jail_first.
@@ -124,11 +124,9 @@ def make_numpy_monopoly(size=40, ndice=2, jail=10, goto_jail=30,
                     # here.
                     for chosen_space in range(size):
                         if (space, chosen_space) in links:
-                            links[space, chosen_space] += (1/size * 12/32 *
-                                                            base_prob)
+                            links[space, chosen_space] += (1 / size * 12 / 32 * base_prob)
                         else:
-                            links[space, chosen_space] = (1/size * 12/32 *
-                                                            base_prob)
+                            links[space, chosen_space] = (1 / size * 12 / 32 * base_prob)
 
                     # Summing up these probabilities, we get:
                     #   20/32 * base_prob + size * 1/size * 12/32 * base_prob
@@ -243,7 +241,7 @@ def make_pykov_monopoly(size=40, ndice=2, jail=10, goto_jail=30,
                     base_prob = dicepdf(advance, ndice, 6)
 
                     # From here, there is a 20/32 chance to stay put.
-                    links[(space, effect_space)] = 20/32 * base_prob
+                    links[(space, effect_space)] = 20 / 32 * base_prob
 
                     # There is a 12/32 chance to move from here to a random
                     # spot, not including goto_jail, but including jail_first.
@@ -253,11 +251,9 @@ def make_pykov_monopoly(size=40, ndice=2, jail=10, goto_jail=30,
                     # here.
                     for chosen_space in range(size):
                         if (space, chosen_space) in links:
-                            links[space, chosen_space] += (1/size * 12/32 *
-                                                            base_prob)
+                            links[space, chosen_space] += (1 / size * 12 / 32 * base_prob)
                         else:
-                            links[space, chosen_space] = (1/size * 12/32 *
-                                                            base_prob)
+                            links[space, chosen_space] = (1 / size * 12 / 32 * base_prob)
 
                     # Summing up these probabilities, we get:
                     #   20/32 * base_prob + size * 1/size * 12/32 * base_prob
@@ -326,7 +322,7 @@ def space_align(strings):
 
     """
     longest = max(len(s) for s in strings)
-    return [" "*(longest - len(s)) + s for s in strings]
+    return [" " * (longest - len(s)) + s for s in strings]
 
 def report_steady(chain):
     """
