@@ -163,6 +163,107 @@ def make_numpy_monopoly(size=40, ndice=2, jail=10, goto_jail=30,
 
     return links.T
 
+
+def make_sympy_monopoly(size=40, ndice=2, jail=10, goto_jail=30,
+                        chance_spaces=[7, 22, 36]):
+    """
+    Create a transition matrix for a finite Markov chain representing a
+    simplified version of Monopoly. See make_pykov_monopoly() for an
+    explanation of our rules.
+
+    We need this method because pykov doesn't allow for easy access to the full
+    transition matrix, making it difficult to verify properties such as
+    regularity.
+
+    This is a _right_ stochastic matrix, i.e. P[i, j] is the probability of
+    moving to state j from state i.
+    """
+
+    # Note: Until the very end of this function, P[i, j] means the probability
+    # of transitioning from state i to state j. We fix that right at the end by
+    # transposing our matrix.
+
+    if jail == goto_jail:
+        raise ValueError("`jail` and `goto_jail` must be distinct")
+
+    # Account for three extra jail spaces.
+    links = sp.zeros(size + 3, size + 3)
+
+    min_advance = ndice
+    max_advance = 6 * ndice
+
+    jail_first = size
+    jail_second = size + 1
+    jail_third = size + 2
+
+    # Probability of rolling one identical number on `ndice`: 6**(-ndice)
+    # We have six numbers to choose from, so our probability is 6**(1 - ndice)
+    escape_prob = sp.S(6)**(1 - ndice)
+
+    # Setup the jail rules.
+    links[jail_first, jail] = escape_prob
+    links[jail_second, jail] = escape_prob
+
+    # Treat the third turn in jail as rolling from jail.
+    for advance in range(min_advance, max_advance + 1):
+        effect_space = (jail + advance) % size
+        links[jail_third, effect_space] = dicepdf(advance, ndice, 6, symbolic=True)
+
+    links[jail_first, jail_second] = 1 - escape_prob
+    links[jail_second, jail_third] = 1 - escape_prob
+
+    # Establish the rules for the rest of the board.
+    for space in range(size):
+        if space == goto_jail:
+            # Immediately go to jail.
+            # (Normally, you wouldn't end up here. This only happens on chance
+            # spaces for technical reasons.)
+            links[space, jail_first] = 1
+        else:
+            for advance in range(min_advance, max_advance + 1):
+                effect_space = (space + advance) % size
+
+                if effect_space == goto_jail:
+                    # Landing on goto_jail is treated as being sent straight to
+                    # jail_first.
+                    links[space, jail_first] += dicepdf(advance, ndice, 6, symbolic=True)
+                elif effect_space in chance_spaces:
+                    # We land here with probability dicepdf(advance, ndice, 6).
+                    base_prob = dicepdf(advance, ndice, 6, symbolic=True)
+
+                    # From here, there is a 20/32 chance to stay put.
+                    links[space, effect_space] += sp.S(20) / 32 * base_prob
+
+                    # There is a 12/32 chance to move from here to a random
+                    # spot, including `jail_first`, and excluding `goto_jail`.
+                    # Each spot will have a 1/size * 12/32 chance of being
+                    # chosen.
+                    # Note that there are `size` elements being considered
+                    # here.
+                    for chosen_space in range(size):
+                        if chosen_space == goto_jail:
+                            chosen_space = jail_first
+
+                        links[space, chosen_space] += (sp.S(1) / size * sp.S(12) / 32 * base_prob)
+
+                    # Summing up these probabilities, we get:
+                    #   20/32 * base_prob + size * 1/size * 12/32 * base_prob
+                    # = base_prob * (20/32 + 12 / 32)
+                    # = base_prob.
+                    # That is, all of the probabilities work out fine.
+                else:
+                    # Proceed as usual according to the probability of the sum.
+                    links[space, effect_space] += dicepdf(advance, ndice, 6, symbolic=True)
+
+    # Alright, so we need to fix one thing. The matrix currently has a column
+    # and row dedicated to `goto_jail`. Nothing goes there, and we don't want
+    # to have it. (It ruins regularity.) Thus, we'll strip its row and its
+    # column from the matrix.
+    links.row_del(goto_jail)
+    links.col_del(goto_jail)
+
+    return links.T
+
 def make_pykov_monopoly(size=40, ndice=2, jail=10, goto_jail=30,
                                         chance_spaces=[7, 22, 36]):
     """Create a Markov chain representing a simplified version of Monopoly.
