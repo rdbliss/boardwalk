@@ -7,6 +7,8 @@ import networkx as nx
 import sympy as sp
 import numpy as np
 import matplotlib.pyplot as plt
+import itertools
+
 
 def choose(n, k):
     """Compute n choose k.
@@ -220,7 +222,7 @@ def make_pykov_monopoly(size=40, ndice=2, jail=10, goto_jail=30,
     if jail == goto_jail:
         raise ValueError("`jail` and `goto_jail` must be distinct")
 
-    links = dict()
+    links = {(i, j): 0 for (i, j) in itertools.product(range(size + 3), repeat=2)}
 
     min_advance = ndice
     max_advance = 6 * ndice
@@ -254,13 +256,13 @@ def make_pykov_monopoly(size=40, ndice=2, jail=10, goto_jail=30,
                 if effect_space == goto_jail:
                     # Landing on goto_jail is treated as being sent straight to
                     # jail_first.
-                    links[(space, jail_first)] = dicepdf(advance, ndice, 6)
+                    links[(space, jail_first)] += dicepdf(advance, ndice, 6)
                 elif effect_space in chance_spaces:
                     # We land here with probability dicepdf(advance, ndice, 6).
                     base_prob = dicepdf(advance, ndice, 6)
 
                     # From here, there is a 20/32 chance to stay put.
-                    links[(space, effect_space)] = 20 / 32 * base_prob
+                    links[(space, effect_space)] += 20 / 32 * base_prob
 
                     # There is a 12/32 chance to move from here to a random
                     # spot, including `jail_first`.
@@ -272,10 +274,8 @@ def make_pykov_monopoly(size=40, ndice=2, jail=10, goto_jail=30,
                         if chosen_space == goto_jail:
                             # Go directly to jail, not `goto_jail`.
                             chosen_space = jail_first
-                        if (space, chosen_space) in links:
-                            links[space, chosen_space] += (1 / size * 12 / 32 * base_prob)
-                        else:
-                            links[space, chosen_space] = (1 / size * 12 / 32 * base_prob)
+
+                        links[(space, chosen_space)] += (1 / size * 12 / 32 * base_prob)
 
                     # Summing up these probabilities, we get:
                     #   20/32 * base_prob + size * 1/size * 12/32 * base_prob
@@ -284,7 +284,7 @@ def make_pykov_monopoly(size=40, ndice=2, jail=10, goto_jail=30,
                     # That is, all of the probabilities work out fine.
                 else:
                     # Proceed as usual according to the probability of the sum.
-                    links[(space, effect_space)] = dicepdf(advance, ndice, 6)
+                    links[(space, effect_space)] += dicepdf(advance, ndice, 6)
 
     return pykov.Chain(links)
 
