@@ -4,6 +4,7 @@
 import pykov
 import math
 import networkx as nx
+import sympy as sp
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -17,7 +18,8 @@ def choose(n, k):
     """
     return math.factorial(n) // math.factorial(k) // math.factorial(n - k)
 
-def dicepdf(p, n, s):
+
+def dicepdf(p, n, s, symbolic=False):
     """
     Compute the probability of obtaining a roll of `p` with `n` `s`-sided dice.
 
@@ -30,11 +32,19 @@ def dicepdf(p, n, s):
     :returns: A probability in [0, 1].
 
     """
-    upper_bound = math.floor((p - n)/s) + 1
+    upper_bound = 0
+    if symbolic:
+        upper_bound = sp.floor(sp.S(p - n) / s) + 1
+    else:
+        upper_bound = math.floor((p - n) / s) + 1
 
-    c = sum((-1)**k * choose(n, k) * choose(p - s*k - 1, n - 1)
+    c = sum((-1)**k * choose(n, k) * choose(p - s * k - 1, n - 1)
             for k in range(upper_bound))
-    return c / s**n
+    if symbolic:
+        return sp.S(c) / s**n
+    else:
+        return c / s**n
+
 
 def draw_chain(chain, layout="circular"):
     """Draw a Markov chain using networkx.
