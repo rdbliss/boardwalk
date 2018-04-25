@@ -482,6 +482,91 @@ def report_steady(chain):
         print("\t{}:".format(aligned_space), prob)
 
 
+def plot_jail_distance(chain, include_jail=False):
+    """TODO: Docstring for jail_distance_plot.
+
+    :chain: TODO
+    :returns: TODO
+
+    """
+    steady = chain.steady()
+    jail_prob = sum(steady[j] for j in JAIL_SPACES)
+    xs = [k - JAIL for k in steady.keys() if k not in JAIL_SPACES]
+    ys = [steady[k] for k in steady.keys() if k not in JAIL_SPACES]
+
+    if include_jail:
+        xs += [0]
+        ys += [jail_prob]
+
+    plt.plot(xs, ys, "ro", ms=5)
+
+
+def expectation_calculation(chain):
+    """TODO: Docstring for expectation_calculation.
+
+    :chain: TODO
+    :returns: TODO
+
+    """
+    steady = chain.steady()
+    expecteds = []
+
+    for space in steady:
+        if space in standard_monopoly_hotel_costs:
+            expected = steady[space] * standard_monopoly_hotel_costs[space]
+            expecteds.append((space, expected))
+
+    expecteds = sorted(expecteds, key=lambda pair: pair[-1], reverse=True)
+
+    return expecteds
+
+
+def plot_expecteds(chain):
+    """TODO: Docstring for plot_expecteds.
+
+    :chain: TODO
+    :returns: TODO
+
+    """
+    expecteds = expectation_calculation(chain)
+    xs, ys = list(zip(*expecteds))
+    plt.plot(xs, ys, "o", ms=10)
+    plt.title("Expected gains versus board number")
+    plt.xlabel("Space number")
+    plt.ylabel("Expected gains (base rent)")
+
+    ax = plt.gca()
+    ax.title.set_fontsize(25)
+    ax.xaxis.label.set_fontsize(20)
+    ax.yaxis.label.set_fontsize(20)
+
+
+standard_monopoly_hotel_costs = {
+    1: 2,
+    3: 4,
+    6: 6,
+    8: 6,
+    9: 8,
+    11: 10,
+    13: 10,
+    14: 12,
+    16: 14,
+    18: 14,
+    19: 16,
+    21: 18,
+    23: 18,
+    24: 20,
+    26: 22,
+    27: 22,
+    29: 24,
+    31: 26,
+    32: 26,
+    34: 28,
+    37: 35,
+    39: 50
+}
+
+
 standard_monopoly_map = { 0: "GO"
                         , 1: "Mediterranean Avenue"
                         , 2: "Community Chest 1"
